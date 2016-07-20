@@ -157,8 +157,6 @@ public class MainActivity extends AppCompatActivity {
             drawPaint.setAlpha(255);
             drawPaint.setTextSize(70);
 
-            //canvas.drawColor(backgroundColor);  // if not here you will see former locations.
-
             if (characterx < 0) {
                 characterx += CHARACTER_MOVE_DISTANCE;
             }
@@ -179,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
                     R.drawable.blueskybackgroundfaded), 0, 0, null);
             canvas.drawBitmap(character, characterx, charactery, drawPaint );
             canvas.drawBitmap(arrowControl, arrowControlx, arrowControly, drawPaint );
+            canvas.drawText("Score: " + score, 16, canvas.getHeight() - 20, drawPaint);
 
 
 
@@ -186,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        // boilerplate pause code
+        // boilerplate pause code from lecture
         public void pause() {
             threadOK = false;
             while (true) {
@@ -200,6 +199,7 @@ public class MainActivity extends AppCompatActivity {
             ViewThread = null;
         }
 
+        // boilerplate pause code from lecture
         public void resume() {
             threadOK = true;
             ViewThread = new Thread(this);
