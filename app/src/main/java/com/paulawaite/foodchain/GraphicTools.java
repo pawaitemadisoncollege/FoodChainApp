@@ -1,5 +1,6 @@
 package com.paulawaite.foodchain;
 
+import android.graphics.Bitmap;
 import android.widget.ImageView;
 
 /**
@@ -7,24 +8,24 @@ import android.widget.ImageView;
  */
 public class GraphicTools {
 
-    public static String determineImagePortionSelected(ImageView inGraphic, float x, float y) {
+    public static String determineImagePortionSelected(Bitmap inGraphic, int inGraphicX, int inGraphicY, float x, float y) {
 
         // LEFT is image left bounds to 1/3 of image width
         // Left if image top bounds -1/3 image height to image top bounds -2/3 image height
 
-        if (isLeftArrowSelected(inGraphic, x, y)) {
+        if (isLeftArrowSelected(inGraphic, inGraphicX, inGraphicY, x, y)) {
             return "left";
         }
 
-        if (isRightArrowSelected(inGraphic, x, y)) {
+        if (isRightArrowSelected(inGraphic, inGraphicX, inGraphicY, x, y)) {
             return "right";
         }
 
-        if (isUpArrowSelected(inGraphic, x, y)) {
+        if (isUpArrowSelected(inGraphic, inGraphicX, inGraphicY, x, y)) {
             return "up";
         }
 
-        if (isDownArrowSelected(inGraphic, x, y)) {
+        if (isDownArrowSelected(inGraphic, inGraphicX, inGraphicY, x, y)) {
             return "down";
         }
 
@@ -33,11 +34,11 @@ public class GraphicTools {
         return "";
     }
 
-    private static boolean isLeftArrowSelected(ImageView inGraphic, float x, float y) {
-        float leftArrowLeftX = inGraphic.getX();
-        float leftArrowRightX = inGraphic.getX() + (inGraphic.getWidth() / 3);
-        float leftArrowTopY = inGraphic.getY() + (inGraphic.getHeight() / 3);
-        float leftArrowBottomY = inGraphic.getY() + (inGraphic.getHeight() * 2 / 3.0f);
+    private static boolean isLeftArrowSelected(Bitmap inGraphic, int inGraphicX, int inGraphicY, float x, float y) {
+        float leftArrowLeftX = inGraphicX;
+        float leftArrowRightX = inGraphicX + (inGraphic.getWidth() / 3);
+        float leftArrowTopY = inGraphicY + (inGraphic.getHeight() / 3);
+        float leftArrowBottomY = inGraphicY + (inGraphic.getHeight() * 2 / 3.0f);
 
         if (x > leftArrowLeftX // pointer is on left arrow
                 && x < leftArrowRightX
@@ -48,11 +49,11 @@ public class GraphicTools {
         return false;
     }
 
-    private static boolean isRightArrowSelected(ImageView inGraphic, float x, float y) {
-        float rightArrowLeftX = inGraphic.getX() + (inGraphic.getWidth() * 2 / 3.0f);
-        float rightArrowRightX = inGraphic.getX() + (inGraphic.getWidth());
-        float rightArrowTopY = inGraphic.getY() + (inGraphic.getHeight() / 3);
-        float rightArrowBottomY = inGraphic.getY() + (inGraphic.getHeight() * 2 / 3.0f);
+    private static boolean isRightArrowSelected(Bitmap inGraphic, int inGraphicX, int inGraphicY, float x, float y) {
+        float rightArrowLeftX = inGraphicX + (inGraphic.getWidth() * 2 / 3.0f);
+        float rightArrowRightX = inGraphicX + (inGraphic.getWidth());
+        float rightArrowTopY = inGraphicY + (inGraphic.getHeight() / 3);
+        float rightArrowBottomY = inGraphicY + (inGraphic.getHeight() * 2 / 3.0f);
 
         if (x > rightArrowLeftX // pointer is on left arrow
                 && x < rightArrowRightX
@@ -63,11 +64,11 @@ public class GraphicTools {
         return false;
     }
 
-    private static boolean isUpArrowSelected(ImageView inGraphic, float x, float y) {
-        float leftArrowLeftX = inGraphic.getX() + (inGraphic.getWidth() / 3);
-        float leftArrowRightX = inGraphic.getX() + (inGraphic.getWidth() * 2 / 3.0f);
-        float leftArrowTopY = inGraphic.getY();
-        float leftArrowBottomY = inGraphic.getY() + (inGraphic.getHeight() / 3);
+    private static boolean isUpArrowSelected(Bitmap inGraphic, int inGraphicX, int inGraphicY, float x, float y) {
+        float leftArrowLeftX = inGraphicX + (inGraphic.getWidth() / 3);
+        float leftArrowRightX = inGraphicX + (inGraphic.getWidth() * 2 / 3.0f);
+        float leftArrowTopY = inGraphicY;
+        float leftArrowBottomY = inGraphicY + (inGraphic.getHeight() / 3);
 
         if (x > leftArrowLeftX // pointer is on left arrow
                 && x < leftArrowRightX
@@ -78,11 +79,11 @@ public class GraphicTools {
         return false;
     }
 
-    private static boolean isDownArrowSelected(ImageView inGraphic, float x, float y) {
-        float leftArrowLeftX = inGraphic.getX() + (inGraphic.getWidth() / 3);
-        float leftArrowRightX = inGraphic.getX() + (inGraphic.getWidth() * 2 / 3.0f);
-        float leftArrowTopY = inGraphic.getY() + (inGraphic.getHeight() * 2 / 3.0f);
-        float leftArrowBottomY = inGraphic.getY() + (inGraphic.getHeight());
+    private static boolean isDownArrowSelected(Bitmap inGraphic, int inGraphicX, int inGraphicY, float x, float y) {
+        float leftArrowLeftX = inGraphicX + (inGraphic.getWidth() / 3);
+        float leftArrowRightX = inGraphicX + (inGraphic.getWidth() * 2 / 3.0f);
+        float leftArrowTopY = inGraphicY + (inGraphic.getHeight() * 2 / 3.0f);
+        float leftArrowBottomY = inGraphicY  + (inGraphic.getHeight());
 
         if (x > leftArrowLeftX // pointer is on left arrow
                 && x < leftArrowRightX
