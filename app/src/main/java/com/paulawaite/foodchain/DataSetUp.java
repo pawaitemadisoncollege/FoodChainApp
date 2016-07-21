@@ -10,19 +10,23 @@ import java.util.ArrayList;
  */
 public class DataSetUp {
     ArrayList<Animal> animals;
+    Animal userCharacter;
 
     public DataSetUp() {
+        createUserCharacter();
         createAnimals();
     }
 
     public void createAnimals() {
-        Animal hummingbirdFemale = new Animal("hummingbird", 1, null, null, "female", "@drawable/rubythroatedfemale.png", null);
-        Animal beeBalm = new Animal("beebalm", 2, null, null, "n/a", null, "@drawable/beebalm.png");
 
-
+        Animal beeBalm = new Animal("beebalm", 2, null, null, "n/a", null, "beebalm");
+        Animal worm = new Animal("worm", 3, null, null, "n/a", null, "worm100");
         animals.add(beeBalm);
-        animals.add(hummingbirdFemale);
 
+    }
+
+    private void createUserCharacter() {
+        Animal userCharacter = new Animal("hummingbird", 1, null, null, "female", "rubythroatedfemale", null);
     }
 
     public ArrayList<Animal> getAnimals() {
