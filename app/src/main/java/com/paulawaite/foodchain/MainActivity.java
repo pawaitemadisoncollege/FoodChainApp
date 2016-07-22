@@ -1,7 +1,7 @@
 package com.paulawaite.foodchain;
 
+import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -13,12 +13,15 @@ import android.graphics.Rect;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Handler;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.paulawaite.foodchain.entity.Animal;
@@ -212,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
                     int characterYadjusted = (int)(charactery * 1.20);
 
                     characterRect = new Rect(characterXadjusted, characterYadjusted, (int)(characterImage.getWidth() *.80) +
-                            characterXadjusted, (int)(characterImage.getHeight() * .80) + characterYadjusted);
+                            characterx, (int)(characterImage.getHeight() * .80) + charactery);
                     targetRect = new Rect(targetx, targety, targetImage.getWidth() + targetx, targetImage.getHeight() + targety);
 
                     onMyDraw(gameCanvas);
@@ -298,13 +301,13 @@ public class MainActivity extends AppCompatActivity {
             canvas.drawText("Score: " + score, 16, canvas.getHeight() - 20, drawPaint);
 
 
-            if (gameOver) {
-                canvas.drawText("GAME OVER", 300, canvas.getHeight()/2, drawPaint);
-            }
+
 
             targety += targetMoveDistance;
 
             if (gameOver) {
+                // canvas.drawText("GAME OVER", 300, canvas.getHeight()/2, drawPaint);
+
                 handler.post(new Runnable() {
                     public void run() {
                         showQuitAlert();
@@ -326,6 +329,7 @@ public class MainActivity extends AppCompatActivity {
             target = targets.get(randomTarget);
 
             int targetIdentifier = getResources().getIdentifier(target.getImage(), "drawable", getPackageName());
+            Log.w("moving", "Image is: " + target.getImage());
             targetImage =  BitmapFactory.decodeResource(getResources(), targetIdentifier);
 
 
@@ -362,29 +366,26 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
-    public void showQuitAlert() {
 
-        AlertDialog.Builder myAlert = new AlertDialog.Builder(context);
-        myAlert.setTitle("Game Over");
-        myAlert.setMessage("Would you like to play again?");
-        myAlert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+
+    public void showQuitAlert() {
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.gameover);
+        final TextView txt = (TextView) dialog.findViewById(R.id.gameoverscoreText);
+        txt.setText("Score: " + score);
+        Button playAgainButton = (Button) dialog.findViewById(R.id.gameoverbutton);
+
+        playAgainButton.setOnClickListener(new Button.OnClickListener(){
+
             @Override
-            public void onClick(DialogInterface dialog, int which) {
+            public void onClick(View v) {
+
                 dialog.dismiss();
                 recreate();
             }
-
-        });
-        myAlert.setNegativeButton("No", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-
-            }
-
         });
 
-        myAlert.show();
+        dialog.show();
     }
 
 }
