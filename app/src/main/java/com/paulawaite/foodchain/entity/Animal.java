@@ -9,13 +9,13 @@ public class Animal {
 
     String name;
     int id;
-    ArrayList<Animal> prey;
-    ArrayList<Animal> predators;
+    ArrayList<Integer> prey;
+    ArrayList<Integer> predators;
     String gender;
     String image; // location of the image file
     String sound; // location of sound file for the animal
 
-    public Animal(String name, int id, ArrayList<Animal> prey, ArrayList<Animal> predators, String gender, String image, String sound) {
+    public Animal(String name, int id, ArrayList<Integer> prey, ArrayList<Integer> predators, String gender, String image, String sound) {
         this.name = name;
         this.id = id;
         this.prey = prey;
@@ -41,19 +41,19 @@ public class Animal {
         this.id = id;
     }
 
-    public ArrayList<Animal> getPrey() {
+    public ArrayList<Integer> getPrey() {
         return prey;
     }
 
-    public void setPrey(ArrayList<Animal> prey) {
+    public void setPrey(ArrayList<Integer> prey) {
         this.prey = prey;
     }
 
-    public ArrayList<Animal> getPredators() {
+    public ArrayList<Integer> getPredators() {
         return predators;
     }
 
-    public void setPredators(ArrayList<Animal> predators) {
+    public void setPredators(ArrayList<Integer> predators) {
         this.predators = predators;
     }
 
@@ -79,6 +79,20 @@ public class Animal {
 
     public void setSound(String sound) {
         this.sound = sound;
+    }
+
+    public boolean isPrey(int id) {
+        if (prey.contains(id)) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isPredator(int id) {
+        if (predators.contains(id)) {
+            return true;
+        }
+        return false;
     }
 
     @Override

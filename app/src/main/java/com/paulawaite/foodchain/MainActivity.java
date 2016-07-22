@@ -1,39 +1,45 @@
 package com.paulawaite.foodchain;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
-import android.media.Image;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Handler;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
-import android.widget.Chronometer;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import com.paulawaite.foodchain.entity.Animal;
+
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
+    GlobalVariables globals;
+
+    SoundPool soundPool;
+    int characterSound = -11; // no sound at current time
+
     Handler handler;
     Context context;
-    Bitmap character;
-    Bitmap arrowControl;
-    Bitmap target;
+    Bitmap characterImage;
+    Bitmap arrowControlImage;
+    Bitmap targetImage;
+    int targetId;
     int score;
 
     float x = 0, y = 0;
@@ -43,8 +49,8 @@ public class MainActivity extends AppCompatActivity {
     boolean moveDown;
 
 
-    int CHARACTER_MOVE_DISTANCE = 25;
-    int TARGET_MOVE_DISTANCE = 15;
+    int characterMoveDistance = 25;
+    int targetMoveDistance = 40;
 
 
     // from sprite canvas
@@ -55,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     int characterx = 400;
-    int charactery = 1000;
+    int charactery = 900;
     //int graphic1xSpeed = 10;
     //int graphic1ySpeed = 10;
 
@@ -71,9 +77,20 @@ public class MainActivity extends AppCompatActivity {
     Rect characterRect;
     Rect targetRect;
 
+    Animal userCharacter;
+    ArrayList<Animal> targets;
+
+    Animal target;
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // create data for application - this would likely use a db at some point
+        globals = GlobalVariables.getInstance();
+        globals.setEventData(new DataSetUp());
 
         setContentView(R.layout.activity_main);
 
@@ -85,11 +102,18 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(gameView);
 
-        character = BitmapFactory.decodeResource(getResources(), R.drawable.rubythroatedfemale);
-        arrowControl = BitmapFactory.decodeResource(getResources(), R.drawable.fourwayarrow);
+        userCharacter = globals.getEventData().getUserCharacter();
+        targets = globals.getEventData().getAnimals();
 
-        int targetId = getResources().getIdentifier("beebalm", "drawable", getPackageName());
-        target =  BitmapFactory.decodeResource(getResources(), targetId);
+        int characterId = getResources().getIdentifier(userCharacter.getImage(), "drawable", getPackageName());
+        characterImage = BitmapFactory.decodeResource(getResources(), characterId);
+
+        arrowControlImage = BitmapFactory.decodeResource(getResources(), R.drawable.fourwayarrow);
+
+        setUpCharacterSound(userCharacter.getSound());
+
+        gameView.createNewTarget();
+
     }
 
     @Override
@@ -121,33 +145,49 @@ public class MainActivity extends AppCompatActivity {
         x = event.getRawX();
         y = event.getRawY() - 245;  // TODO can i programmatically get the -245 for the ribbon
 
-        switch (GraphicTools.determineImagePortionSelected(arrowControl, arrowControlx, arrowControly, x, y)) {
+        switch (GraphicTools.determineImagePortionSelected(arrowControlImage, arrowControlx, arrowControly, x, y)) {
             case "left": {
-                characterx -= CHARACTER_MOVE_DISTANCE;
+                characterx -= characterMoveDistance;
             }
             break;
             case "right": {
-                characterx += CHARACTER_MOVE_DISTANCE;
+                characterx += characterMoveDistance;
             }
             break;
             case "up": {
-                charactery -= CHARACTER_MOVE_DISTANCE;
+                charactery -= characterMoveDistance;
             }
             break;
             case "down": {
-                charactery += CHARACTER_MOVE_DISTANCE;
+                charactery += characterMoveDistance;
             }
             break;
         }
     }
 
+        public void setUpCharacterSound(String file){
+            setVolumeControlStream(AudioManager.STREAM_MUSIC);
+            soundPool = new SoundPool(20, AudioManager.STREAM_MUSIC, 0); // how many sounds in the pool, source, quality
+            AssetManager assetManager = getAssets();
+
+            try {
+                AssetFileDescriptor descriptor = assetManager.openFd(file);
+                characterSound = soundPool.load(descriptor, 1); // priority
+            } catch (IOException ioe){
+                ioe.printStackTrace();
+            }
+        }
+
 
 
     public class GameView extends SurfaceView implements Runnable {
+
+        boolean gameOver = false;
         boolean threadOK = true;
         Thread ViewThread = null;
         SurfaceHolder surfaceHolder;
         boolean showTarget = true;
+        boolean showCharacter = true;
         //canvas size reported to be 1080 x 1536, actual seems to be 875 and 1275
         int canvasX = 875;
         int canvasY = 1275;
@@ -160,7 +200,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void run() {
-            while (threadOK) {
+            while (threadOK && !gameOver) {
                 if (!surfaceHolder.getSurface().isValid()) {
                     continue;
                 } else {
@@ -171,9 +211,9 @@ public class MainActivity extends AppCompatActivity {
                     int characterXadjusted = (int)(characterx * 1.20);
                     int characterYadjusted = (int)(charactery * 1.20);
 
-                    characterRect = new Rect(characterXadjusted, characterYadjusted, (int)(character.getWidth() *.80) +
-                            characterXadjusted, (int)(character.getHeight() * .80) + characterYadjusted);
-                    targetRect = new Rect(targetx, targety, target.getWidth() + targetx, target.getHeight() + targety);
+                    characterRect = new Rect(characterXadjusted, characterYadjusted, (int)(characterImage.getWidth() *.80) +
+                            characterXadjusted, (int)(characterImage.getHeight() * .80) + characterYadjusted);
+                    targetRect = new Rect(targetx, targety, targetImage.getWidth() + targetx, targetImage.getHeight() + targety);
 
                     onMyDraw(gameCanvas);
                     surfaceHolder.unlockCanvasAndPost(gameCanvas);  //post to primary canvas
@@ -187,37 +227,68 @@ public class MainActivity extends AppCompatActivity {
 
 
             if (characterx < 0) {
-                characterx += CHARACTER_MOVE_DISTANCE;
+                characterx += characterMoveDistance;
             }
 
             if (characterx > canvasX) {
-                characterx -= CHARACTER_MOVE_DISTANCE;
+                characterx -= characterMoveDistance;
             }
 
             if (charactery < 0) {
-                charactery += CHARACTER_MOVE_DISTANCE;
+                charactery += characterMoveDistance;
             }
 
             if (charactery > canvasY) {
-                charactery -= CHARACTER_MOVE_DISTANCE;
+                charactery -= characterMoveDistance;
             }
 
             canvas.drawBitmap(BitmapFactory.decodeResource(getResources(),
                     R.drawable.blueskybackgroundfaded), 0, 0, null);
-            canvas.drawBitmap(character, characterx, charactery, drawPaint);
-            canvas.drawBitmap(arrowControl, arrowControlx, arrowControly, drawPaint);
+
+            if (!gameOver){
+                canvas.drawBitmap(characterImage, characterx, charactery, drawPaint);
+            }
+
+            canvas.drawBitmap(arrowControlImage, arrowControlx, arrowControly, drawPaint);
+
             if (showTarget) {
-                canvas.drawBitmap(target, targetx, targety, drawPaint);
+                canvas.drawBitmap(targetImage, targetx, targety, drawPaint);
 
                 if (Rect.intersects(characterRect, targetRect)) {
 
-                    score += 10;
-                    showTarget = false;
-                    handler.post(new Runnable() {
-                        public void run() {
-                            Toast.makeText(context, "+10", Toast.LENGTH_SHORT).show();
+                    if (userCharacter.isPrey(target.getId())) {
+
+                        score += 10;
+                        showTarget = false;
+                        soundPool.play(characterSound, 1, 1, 0, 0, 1);
+                        handler.post(new Runnable() {
+                            public void run() {
+                                Toast.makeText(context, "+10", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                        //speed up the targets if the user has > 50
+                        if (score > 50) {
+                            targetMoveDistance += 10;
                         }
-                    });
+                    } else if (userCharacter.isPredator(target.getId())) {
+                        gameOver = true;
+                        handler.post(new Runnable() {
+                            public void run() {
+                                Toast.makeText(context, "You were eaten!", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    } else {
+                        score -= 10;
+                        showTarget = false;
+                        handler.post(new Runnable() {
+                            public void run() {
+                                Toast.makeText(context, "You can't eat that! -10", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                }
+                else if (targety > canvasY) {
+                    createNewTarget();
                 }
             } else {
                 createNewTarget();
@@ -226,12 +297,41 @@ public class MainActivity extends AppCompatActivity {
 
             canvas.drawText("Score: " + score, 16, canvas.getHeight() - 20, drawPaint);
 
-            targety += TARGET_MOVE_DISTANCE;
+
+            if (gameOver) {
+                canvas.drawText("GAME OVER", 300, canvas.getHeight()/2, drawPaint);
+            }
+
+            targety += targetMoveDistance;
+
+            if (gameOver) {
+                handler.post(new Runnable() {
+                    public void run() {
+                        showQuitAlert();
+                    }
+                });
+
+            }
 
         }
 
         private void createNewTarget() {
+
+            // randomly choose an animal to be the target
             Random random = new Random();
+            int low = 0;
+            int high = targets.size() - 1;
+            int randomTarget = (random.nextInt(high + 1));
+
+            target = targets.get(randomTarget);
+
+            int targetIdentifier = getResources().getIdentifier(target.getImage(), "drawable", getPackageName());
+            targetImage =  BitmapFactory.decodeResource(getResources(), targetIdentifier);
+
+
+
+            // place image randomly along X axis at top
+            random = new Random();
             int leftEdge = 0;
             int rightEdge = canvasX;
             targetx = (random.nextInt(rightEdge + 1));
@@ -262,4 +362,29 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
+    public void showQuitAlert() {
+
+        AlertDialog.Builder myAlert = new AlertDialog.Builder(context);
+        myAlert.setTitle("Game Over");
+        myAlert.setMessage("Would you like to play again?");
+        myAlert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                recreate();
+            }
+
+        });
+        myAlert.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+
+            }
+
+        });
+
+        myAlert.show();
+    }
+
 }
